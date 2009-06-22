@@ -1,0 +1,29 @@
+This script takes an export file from KeePassX and produces a stripped-down
+CSV file, which can then be imported into a spreadsheet or something and
+printed.  This is handy for stashing a password list in the fire safe...
+just in case.
+
+More information on KeePassX:
+http://www.keepassx.org/
+
+To export the necessary file:
+File -> Export to... -> KeePassX XML File
+Put the file some place temporary, then fire up this script:
+$ keepassx2csv frubble.xml > frubble.csv
+
+The produced file is of the format:
+"Group","Title","Username","Password"
+
+You can then do what you want with it.  WARNING: You're gonna wanna delete
+this file pretty danged well when you're done with it.
+
+Any questions -> rtucker@gmail.com
+
+TODO LIST
+---------
+* Changelog
+* License
+
+* Add native printing support?  (Make it look pretty, fit-on-one-sheet option?)
+
+
