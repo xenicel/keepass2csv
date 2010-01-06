@@ -1,0 +1,99 @@
+#!/usr/bin/python
+
+# turns xml export from keepassx into pdf file, suitable for printing
+
+# Ryan Tucker 2010/01/06
+
+import os.path
+import sys
+import time
+import xml.etree.ElementTree as ET
+
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch, pica
+from reportlab.lib import colors
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+class XTable(Table):
+    """props to http://stackoverflow.com/questions/78450/python-reportlab-use-of-splitfirst-splitlast"""
+    def onSplit(self, T, byRow=1):
+        T.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightcoral)]))
+
+try:
+    if len(sys.argv) == 3:
+        iconfilter = None
+        filename = sys.argv[1]
+        outfile = sys.argv[2]
+    elif len(sys.argv) == 4:
+        iconfilter = sys.argv[1].split('=')[1]
+        filename = sys.argv[2]
+        outfile = sys.argv[3]
+except:
+    print 'usage: ' + sys.argv[0] + ' [--iconfilter=2] input_filename.xml output_filename.pdf'
+    sys.exit(1)
+
+outputlist = []
+maxwidths = {"group": 0, "title": 0, "username": 0, "password": 0}
+
+tree = ET.parse(filename)
+
+# The database level
+elem = tree.getroot()
+firstgroup = elem.getchildren()[0]
+
+# General level
+level1 = firstgroup.find('title').text
+
+# get individual groups
+for i in firstgroup.findall('group'):
+    level2 = i.find('title').text
+    # Get individual entries
+    for j in i.findall('entry'):
+        title = j.find('title').text
+        username = j.find('username').text
+        password = j.find('password').text
+        if iconfilter:
+            if j.find('icon').text != iconfilter:
+                continue
+        if not username: username = ' '	
+        if not title: title = ' '
+        if not password: password = ' '
+        outputlist.append([level2, title, username, password])
+        if len(level2) > maxwidths["group"]: maxwidths["group"] = len(level2)
+        if len(title) > maxwidths["title"]: maxwidths["title"] = len(title)
+        if len(username) > maxwidths["username"]: maxwidths["username"] = len(username)
+        if len(password) > maxwidths["password"]: maxwidths["password"] = len(password)
+
+# process into nicely-formatted pdf
+pdf = SimpleDocTemplate(outfile, pagesize=letter)
+pdf.topMargin=pdf.bottomMargin=.2*inch
+output = []
+
+k = 820   # inverse proportionality constant between maxwidths sum & fontsize
+fontsize = min(17,k/sum(maxwidths.values()))
+
+style = getSampleStyleSheet()
+outtext = "Password list generated %s" % time.strftime("%Y-%m-%d", time.localtime(os.path.getmtime(filename)))
+if iconfilter:
+    outtext += ", filter icon: %s" % iconfilter
+
+output.append(Paragraph(outtext, style["Heading1"]))
+
+outputlist.insert(0, ["Group", "Title", "Username", "Password"])
+
+charwidth = fontsize*.7
+colWidths = (maxwidths["group"]*charwidth, maxwidths["title"]*charwidth,
+             maxwidths["username"]*charwidth, maxwidths["password"]*charwidth)
+
+table = XTable(outputlist, colWidths=colWidths, repeatRows=1)
+table.setStyle(TableStyle([
+                           #('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                           #('BOX', (0,0), (-1,-1), 0.25, colors.black),
+                           ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.lightgrey, colors.white]),
+                           ('FONT', (0,0), (-1,-1), "Courier", fontsize),
+                          ]))
+output.append(table)
+pdf.build(output)
+
