@@ -21,16 +21,15 @@ class XTable(Table):
         T.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.lightcoral)]))
 
-try:
-    if len(sys.argv) == 3:
-        iconfilter = None
-        filename = sys.argv[1]
-        outfile = sys.argv[2]
-    elif len(sys.argv) == 4:
-        iconfilter = sys.argv[1].split('=')[1]
-        filename = sys.argv[2]
-        outfile = sys.argv[3]
-except:
+if len(sys.argv) == 3:
+    iconfilter = None
+    filename = sys.argv[1]
+    outfile = sys.argv[2]
+elif len(sys.argv) == 4:
+    iconfilter = sys.argv[1].split('=')[1]
+    filename = sys.argv[2]
+    outfile = sys.argv[3]
+else:
     print 'usage: ' + sys.argv[0] + ' [--iconfilter=2] input_filename.xml output_filename.pdf'
     sys.exit(1)
 
