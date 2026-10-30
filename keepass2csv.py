@@ -13,7 +13,7 @@ tree = ET.parse(filename)
 
 # The database level
 elem = tree.getroot()
-firstgroup = elem.getchildren()[1]
+firstgroup = list(elem)[1]
 
 # Get group nodes
 for i in firstgroup.findall('Group'):
